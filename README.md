@@ -18,25 +18,25 @@ One command to start. One link to share. No install needed for your friend.
 ## How It Works
 
 ```
-  YOU                          YOUR FRIEND
-  ┌──────────┐                 ┌──────────┐
-  │  Browser  │                │  Browser  │
-  │          │                │          │
-  │ Terminal  │◄──── ws ─────►│ Terminal  │
-  │   Chat    │                │   Chat    │
-  └─────┬────┘                └─────┬────┘
-        │                           │
-        └───────────┬───────────────┘
-                    │
-            ┌───────┴────────┐
-            │  claude-collab  │
-            │    server       │
-            │                 │
-            │  ┌───────────┐  │
-            │  │ Claude Code│  │
-            │  │   (pty)    │  │
-            │  └───────────┘  │
-            └────────────────┘
+    YOU                              YOUR FRIEND
+  +------------+                   +------------+
+  |  Browser   |                   |  Browser   |
+  |            |                   |            |
+  |  Terminal  | <---- ws ------>  |  Terminal  |
+  |  Chat      |                   |  Chat      |
+  +-----+------+                   +-----+------+
+        |                                |
+        +---------------+----------------+
+                        |
+               +--------+--------+
+               |  claude-collab  |
+               |     server      |
+               |                 |
+               |  +-----------+  |
+               |  |Claude Code|  |
+               |  |   (pty)   |  |
+               |  +-----------+  |
+               +-----------------+
 ```
 
 1. **Start** — Run `claude-collab`. It launches a local server and opens a public tunnel.
@@ -109,32 +109,32 @@ claude-collab --debug
 ## Features
 
 ```
-  ┌─────────────────────────────────────────────┐
-  │            DASHBOARD (index.html)            │
-  │                                              │
-  │  [Repo URL: _______________] [Start Session] │
-  │                                              │
-  │  Active Sessions:                            │
-  │  ┌─────────────────────────┐                 │
-  │  │ my-app  (2 users)  [End]│                 │
-  │  └─────────────────────────┘                 │
-  │  ┌─────────────────────────┐                 │
-  │  │ api-server (1 user) [End]│                │
-  │  └─────────────────────────┘                 │
-  └─────────────────────────────────────────────┘
+  +-----------------------------------------------+
+  |             DASHBOARD (index.html)             |
+  |                                                |
+  |  [Repo URL: ________________] [Start Session]  |
+  |                                                |
+  |  Active Sessions:                              |
+  |  +----------------------------+                |
+  |  | my-app  (2 users)    [End] |                |
+  |  +----------------------------+                |
+  |  +----------------------------+                |
+  |  | api-server (1 user)  [End] |                |
+  |  +----------------------------+                |
+  +-----------------------------------------------+
 
-  ┌─────────────────────────────────────────────┐
-  │           SESSION (session.html)             │
-  │                                              │
-  │  ┌───────────────────────┐ ┌──────────────┐ │
-  │  │                       │ │  Chat         │ │
-  │  │   Claude Code         │ │              │ │
-  │  │   Terminal             │ │  Alice: hi!  │ │
-  │  │                       │ │  Bob: hey    │ │
-  │  │   > fixing the bug... │ │              │ │
-  │  │                       │ │  [message]   │ │
-  │  └───────────────────────┘ └──────────────┘ │
-  └─────────────────────────────────────────────┘
+  +-----------------------------------------------+
+  |            SESSION (session.html)              |
+  |                                                |
+  |  +-------------------------+ +--------------+  |
+  |  |                         | | Chat         |  |
+  |  |  Claude Code            | |              |  |
+  |  |  Terminal               | | Alice: hi!   |  |
+  |  |                         | | Bob: hey     |  |
+  |  |  > fixing the bug...   | |              |  |
+  |  |                         | | [message]    |  |
+  |  +-------------------------+ +--------------+  |
+  +-----------------------------------------------+
 ```
 
 - **Multi-session** — Run multiple Claude Code sessions at once against different repos
@@ -154,15 +154,15 @@ claude-collab --debug
 claude-collab tries to give you a public URL automatically:
 
 ```
-  1. cloudflared    ──►  https://random-words.trycloudflare.com
+  1. cloudflared   -->  https://random-words.trycloudflare.com
      (best, auto-installs via brew if available)
-              │
-              ▼ fallback
-  2. localtunnel    ──►  https://xyz.loca.lt
+              |
+              v  fallback
+  2. localtunnel   -->  https://xyz.loca.lt
      (bundled, no install needed)
-              │
-              ▼ fallback
-  3. LAN IP         ──►  http://192.168.1.x:3000
+              |
+              v  fallback
+  3. LAN IP        -->  http://192.168.1.x:3000
      (same network only)
 ```
 
