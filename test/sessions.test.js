@@ -44,9 +44,9 @@ describe("lib/sessions.js - SessionManager", () => {
       });
     });
 
-    // Mock git.ensureRepo
+    // Mock git.cloneOrPull
     const gitModule = require("../lib/git.js");
-    mock.method(gitModule, "ensureRepo", (repoUrl, sessionDir) => {
+    mock.method(gitModule, "cloneOrPull", (repoUrl, sessionDir) => {
       // Parse the URL to validate it (will throw if invalid)
       const { parseRepoUrl } = gitModule;
       const { owner, name } = parseRepoUrl(repoUrl);

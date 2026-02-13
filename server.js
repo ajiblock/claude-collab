@@ -20,23 +20,6 @@ function checkCreateRateLimit() {
   return true;
 }
 
-// Rate limiting: WebSocket upgrade attempts per IP
-const wsUpgradeLimits = new Map();
-function checkWsUpgradeRateLimit(ip) {
-  const now = Date.now();
-  const oneMinAgo = now - 60000;
-  let timestamps = wsUpgradeLimits.get(ip);
-  if (!timestamps) {
-    timestamps = [];
-    wsUpgradeLimits.set(ip, timestamps);
-  }
-  while (timestamps.length && timestamps[0] < oneMinAgo) timestamps.shift();
-  if (timestamps.length === 0) { wsUpgradeLimits.delete(ip); }
-  if (timestamps.length >= 20) return false;
-  timestamps.push(now);
-  return true;
-}
-
 // Rate limiting: chat messages per client
 const chatRateLimits = new Map();
 function checkChatRateLimit(ws) {
@@ -51,6 +34,21 @@ function checkChatRateLimit(ws) {
   if (timestamps.length >= 30) return false;
   timestamps.push(now);
   return true;
+}
+
+function detectPort(data, serverPort) {
+  const clean = data.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "");
+  const match = clean.match(/https?:\/\/(?:localhost|127\.0\.0\.1):(\d{4,5})/);
+  if (!match) return null;
+  const port = parseInt(match[1], 10);
+  if (port < 1024 || port > 65535) return null;
+  if (port === serverPort) return null;
+  return port;
+}
+
+function detectFileUrl(data) {
+  const clean = data.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "");
+  return /file:\/\/\//.test(clean);
 }
 
 function broadcastToSession(session, msg) {
@@ -83,7 +81,21 @@ function computeMinSize(session) {
 const sessionManager = new SessionManager({
   onData(sessionId, data) {
     const s = sessionManager.getInternal(sessionId);
-    if (s) broadcastToSession(s, { type: "terminal-output", data });
+    if (s) {
+      if (!s.previewPort) {
+        const port = detectPort(data, config.port);
+        if (port && sessionManager.setPreviewPort(sessionId, port)) {
+          broadcastToSession(s, { type: "preview-port-update", port });
+        } else if (!s._fileUrlWarned && detectFileUrl(data)) {
+          s._fileUrlWarned = true;
+          broadcastToSession(s, {
+            type: "preview-hint",
+            message: "file:// URLs can't be previewed — ask Claude to use an HTTP server (e.g. npx serve) instead.",
+          });
+        }
+      }
+      broadcastToSession(s, { type: "terminal-output", data });
+    }
   },
   onEnd(sessionId) {
     const s = sessionManager.getInternal(sessionId);
@@ -124,6 +136,53 @@ let nextClientId = 1;
 function startServer() {
   return new Promise((resolve) => {
     const app = express();
+
+    // Preview proxy route — must come BEFORE express.json() to preserve raw request body for piping
+    function proxyHandler(req, res) {
+      const sessionId = req.params.sessionId;
+      const session = sessionManager.getInternal(sessionId);
+      if (!session || session.status !== "active") {
+        return res.status(404).json({ error: "Session not found or ended" });
+      }
+      if (!session.previewPort) {
+        return res.status(400).json({ error: "No preview port set" });
+      }
+
+      // Build the path to forward — strip the /preview/:sessionId prefix
+      const prefix = `/preview/${sessionId}`;
+      let forwardPath = req.originalUrl.slice(prefix.length) || "/";
+
+      const options = {
+        hostname: "localhost",
+        port: session.previewPort,
+        path: forwardPath,
+        method: req.method,
+        headers: { ...req.headers, host: `localhost:${session.previewPort}` },
+      };
+
+      const proxyReq = http.request(options, (proxyRes) => {
+        // Strip headers that prevent iframe embedding or cause cookie confusion
+        const headers = { ...proxyRes.headers };
+        delete headers["x-frame-options"];
+        delete headers["content-security-policy"];
+        delete headers["set-cookie"];
+
+        res.writeHead(proxyRes.statusCode, headers);
+        proxyRes.pipe(res, { end: true });
+      });
+
+      proxyReq.on("error", () => {
+        if (!res.headersSent) {
+          res.status(502).json({ error: "Dev server not responding. Is it running?" });
+        }
+      });
+
+      req.pipe(proxyReq, { end: true });
+    }
+
+    app.all("/preview/:sessionId", proxyHandler);
+    app.all("/preview/:sessionId/*", proxyHandler);
+
     app.use(express.json());
 
     // Debug request logging
@@ -159,8 +218,7 @@ function startServer() {
         const session = sessionManager.create(repo);
         res.json(session);
       } catch (e) {
-        console.error("Session creation failed:", e.message);
-        res.status(400).json({ error: "Failed to create session. Check the repo URL and try again." });
+        res.status(400).json({ error: e.message });
       }
     });
 
@@ -188,15 +246,7 @@ function startServer() {
     const wss = new WebSocketServer({ noServer: true });
 
     server.on("upgrade", (req, socket, head) => {
-      const ip = req.socket.remoteAddress || "unknown";
-      dbg(`WS upgrade: ${req.url} from ${ip}`);
-
-      if (!checkWsUpgradeRateLimit(ip)) {
-        dbg(`WS upgrade rejected: rate limited (${ip})`);
-        socket.destroy();
-        return;
-      }
-
+      dbg(`WS upgrade: ${req.url} from ${req.headers.host}`);
       const match = req.url.match(/^\/ws\/([a-f0-9]{32})$/);
       if (!match) {
         dbg("WS upgrade rejected: bad URL pattern");
@@ -247,6 +297,11 @@ function startServer() {
 
       // Broadcast users update
       broadcastUsersUpdate(session);
+
+      // Send current preview port if set
+      if (session.previewPort) {
+        ws.send(JSON.stringify({ type: "preview-port-update", port: session.previewPort }));
+      }
 
       ws.on("message", (raw) => {
         let msg;
@@ -302,9 +357,16 @@ function startServer() {
             break;
           }
 
+          case "set-preview-port": {
+            const port = msg.port === null ? null : msg.port;
+            if (sessionManager.setPreviewPort(sessionId, port)) {
+              broadcastToSession(session, { type: "preview-port-update", port: session.previewPort });
+            }
+            break;
+          }
+
           case "resize":
-            if (typeof msg.cols === "number" && typeof msg.rows === "number" &&
-                msg.cols >= 20 && msg.cols <= 500 && msg.rows >= 5 && msg.rows <= 200) {
+            if (msg.cols && msg.rows) {
               session.clientSizes.set(ws, {
                 cols: msg.cols,
                 rows: msg.rows,
@@ -349,7 +411,7 @@ function startServer() {
   });
 }
 
-module.exports = { startServer };
+module.exports = { startServer, detectPort };
 
 // If run directly (not via CLI), start immediately
 if (require.main === module) {

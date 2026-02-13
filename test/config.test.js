@@ -28,7 +28,7 @@ describe("lib/config.js", () => {
 
   it("returns default values when no env vars set", () => {
     const config = require("../lib/config.js");
-    assert.strictEqual(config.port, 3000);
+    assert.strictEqual(config.port, 4321);
     assert.strictEqual(config.host, "0.0.0.0");
     assert.strictEqual(config.baseUrl, null);
     assert.strictEqual(config.claudePath, "claude");
@@ -47,15 +47,15 @@ describe("lib/config.js", () => {
   it("uses default PORT when non-numeric value provided", () => {
     process.env.PORT = "not-a-number";
     const config = require("../lib/config.js");
-    // parseInt returns NaN, so || 3000 kicks in
-    assert.strictEqual(config.port, 3000);
+    // parseInt returns NaN, so || 4321 kicks in
+    assert.strictEqual(config.port, 4321);
   });
 
   it("uses default PORT when 0 is provided (falsy value)", () => {
     process.env.PORT = "0";
     const config = require("../lib/config.js");
-    // parseInt("0", 10) returns 0, which is falsy, so || 3000 kicks in
-    assert.strictEqual(config.port, 3000);
+    // parseInt("0", 10) returns 0, which is falsy, so || 4321 kicks in
+    assert.strictEqual(config.port, 4321);
   });
 
   it("throws on invalid PORT - above 65535", () => {

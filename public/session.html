@@ -54,7 +54,48 @@
 
   <!-- Main Content -->
   <div class="main">
-    <div id="terminal" class="terminal-container"></div>
+    <div class="content-area">
+      <div class="tab-bar">
+        <button id="tab-terminal" class="tab-btn tab-btn--active">Terminal</button>
+        <button id="tab-preview" class="tab-btn">Browser</button>
+      </div>
+      <div id="panel-terminal" class="tab-panel tab-panel--active">
+        <div id="terminal" class="terminal-container"></div>
+      </div>
+      <div id="panel-preview" class="tab-panel">
+        <div id="preview-setup" class="preview-setup">
+          <div class="preview-setup__card">
+            <div class="preview-setup__title">Live Preview</div>
+            <div class="preview-setup__subtitle">Enter the port of your local dev server</div>
+            <div class="preview-setup__row">
+              <input
+                id="preview-port-input"
+                class="preview-setup__input"
+                type="number"
+                placeholder="e.g. 5173"
+                min="1024"
+                max="65535"
+                autocomplete="off"
+              >
+              <button id="preview-connect-btn" class="preview-setup__btn">Connect</button>
+            </div>
+            <div id="preview-error" class="preview-setup__error"></div>
+          </div>
+        </div>
+        <div id="preview-viewer" class="preview-viewer" style="display:none;">
+          <div class="preview-toolbar">
+            <span class="preview-toolbar__url" id="preview-url">localhost</span>
+            <button id="preview-refresh-btn" class="preview-toolbar__btn" title="Refresh">Reload</button>
+            <button id="preview-disconnect-btn" class="preview-toolbar__btn preview-toolbar__btn--danger" title="Disconnect">Disconnect</button>
+          </div>
+          <iframe
+            id="preview-iframe"
+            class="preview-iframe"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+          ></iframe>
+        </div>
+      </div>
+    </div>
     <aside class="chat-sidebar">
       <div class="chat-header">
         Chat

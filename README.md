@@ -74,7 +74,7 @@ curl -fsSL https://raw.githubusercontent.com/ajiblock/claude-collab/main/install
 ```
 Usage: claude-collab [options]
 
-  --port <number>     Port to listen on (default: 3000)
+  --port <number>     Port to listen on (default: 4321)
   --no-tunnel         Skip public tunnel, local network only
   --debug             Verbose request + WebSocket logging
   --help, -h          Show help
@@ -82,7 +82,7 @@ Usage: claude-collab [options]
 
 ### `--port <number>`
 
-Run on a specific port. Useful if 3000 is taken.
+Run on a specific port. Useful if 4321 is taken.
 
 ```bash
 claude-collab --port 8080
@@ -111,12 +111,25 @@ claude-collab --debug
 - **Multi-session** — Run multiple Claude Code sessions at once against different repos
 - **Auto-tunnel** — Creates a public HTTPS URL automatically (Cloudflare > localtunnel > LAN fallback)
 - **Real-time terminal** — Shared PTY via WebSocket. Everyone sees the same output instantly.
+- **Live preview** — See what Claude is building in a browser tab right next to the terminal. Auto-detects dev server ports, or enter a port manually. All connected users see the same preview.
 - **Built-in chat** — Sidebar chat so you can discuss without interrupting Claude
 - **Link-only access** — No accounts, no login. Just share the URL.
 - **Terminal submissions feed** — See who typed what into the terminal
 - **Auto-reconnect** — Handles dropped connections gracefully
 - **Smart resize** — Terminal adapts to the smallest connected browser window
 - **Rate limiting** — Built-in protection against spam (5 sessions/min, 30 chat messages/min)
+
+---
+
+## Live Preview
+
+Every session has a **Preview** tab next to the Terminal tab. It lets all connected users see what Claude is building — HTML pages, React apps, API responses — without leaving the session.
+
+**How it works:**
+- When Claude starts a dev server (e.g. `npx serve`, `npm run dev`, `python3 -m http.server`), the server auto-detects the port from terminal output and loads the preview automatically
+- You can also enter a port manually in the preview toolbar
+- The preview is proxied through the claude-collab server, so it works over tunnels — everyone sees it, not just the host
+- Claude is instructed to use HTTP servers instead of `file://` URLs. If a `file://` URL is detected, a hint appears suggesting you enter the port manually
 
 ---
 
@@ -133,7 +146,7 @@ claude-collab tries to give you a public URL automatically:
      (bundled, no install needed)
               |
               v  fallback
-  3. LAN IP        -->  http://192.168.1.x:3000
+  3. LAN IP        -->  http://192.168.1.x:4321
      (same network only)
 ```
 
@@ -147,7 +160,7 @@ All optional. Set in `.env.local` or export before running.
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | `3000` | Server port |
+| `PORT` | `4321` | Server port |
 | `HOST` | `0.0.0.0` | Bind address |
 | `DATA_DIR` | `./data` | Session data directory |
 | `CLAUDE_PATH` | `claude` | Path to Claude Code binary |
