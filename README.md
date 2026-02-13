@@ -76,6 +76,7 @@ Usage: claude-collab [options]
 
   --port <number>     Port to listen on (default: 4321)
   --no-tunnel         Skip public tunnel, local network only
+  --no-chat           Disable the chat sidebar
   --debug             Verbose request + WebSocket logging
   --help, -h          Show help
 ```
@@ -96,6 +97,14 @@ Skip the automatic public tunnel. The server will only be accessible on your loc
 claude-collab --no-tunnel
 ```
 
+### `--no-chat`
+
+Disable the chat sidebar. The session will be terminal-only — no chat panel on desktop, no Chat tab on mobile.
+
+```bash
+claude-collab --no-chat
+```
+
 ### `--debug`
 
 Log every HTTP request and WebSocket connection with timing info. Helpful for diagnosing connection issues.
@@ -112,7 +121,7 @@ claude-collab --debug
 - **Auto-tunnel** — Creates a public HTTPS URL automatically (Cloudflare > localtunnel > LAN fallback)
 - **Real-time terminal** — Shared PTY via WebSocket. Everyone sees the same output instantly.
 - **Live preview** — See what Claude is building in a browser tab right next to the terminal. Auto-detects dev server ports, or enter a port manually. All connected users see the same preview.
-- **Built-in chat** — Sidebar chat so you can discuss without interrupting Claude
+- **Built-in chat** — Sidebar chat so you can discuss without interrupting Claude. On mobile, chat moves to its own tab for a better experience. Disable with `--no-chat`.
 - **Link-only access** — No accounts, no login. Just share the URL.
 - **Terminal submissions feed** — See who typed what into the terminal
 - **Auto-reconnect** — Handles dropped connections gracefully
@@ -166,6 +175,7 @@ All optional. Set in `.env.local` or export before running.
 | `CLAUDE_PATH` | `claude` | Path to Claude Code binary |
 | `MAX_SESSIONS` | `10` | Max concurrent sessions |
 | `SESSION_IDLE_TIMEOUT` | `0` | Auto-end idle sessions (minutes, 0 = off) |
+| `CLAUDE_COLLAB_NO_CHAT` | _(unset)_ | Set to `1` to disable chat |
 
 ---
 
@@ -188,6 +198,7 @@ claude-collab/
 │   ├── config.js           # Environment config loader
 │   ├── git.js              # Repo cloning
 │   ├── pty-manager.js      # PTY process management
+│   ├── prompt-tracker.js    # Detects Claude's y/n and numbered prompts
 │   ├── session.js          # Single session state (users, chat)
 │   ├── sessions.js         # Session lifecycle manager
 │   └── tunnel.js           # Cloudflare / localtunnel / LAN

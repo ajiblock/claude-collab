@@ -94,6 +94,7 @@ const sessionManager = new SessionManager({
           });
         }
       }
+      s.promptTracker.feed(data);
       broadcastToSession(s, { type: "terminal-output", data });
     }
   },
@@ -113,7 +114,7 @@ const sessionManager = new SessionManager({
   },
 });
 
-function flushInputBuffer(ws, session) {
+function flushInputBuffer(ws, session, prompt) {
   const raw = (ws._inputBuffer || "");
   ws._inputBuffer = "";
   // Strip ANSI escape sequences, control chars, and DEL
@@ -122,12 +123,28 @@ function flushInputBuffer(ws, session) {
   if (input.length > 0) {
     const user = session.session.users.get(ws._clientId);
     const senderName = user ? user.name : "Unknown";
-    broadcastToSession(session, {
+
+    // Resolve prompt context (from auto-flush or Enter-based flush)
+    const activePrompt = prompt || session.promptTracker.getActivePrompt();
+    const msg = {
       type: "terminal-submission",
       name: senderName,
       text: input,
       ts: Date.now(),
-    });
+    };
+
+    if (activePrompt) {
+      msg.promptQuestion = activePrompt.question;
+      if (activePrompt.type === "yn") {
+        msg.selectedOption = /[yY]/.test(input) ? "Yes" : "No";
+      } else if (activePrompt.type === "numbered" && activePrompt.options) {
+        const match = activePrompt.options.find((o) => o.number === input);
+        if (match) msg.selectedOption = match.text;
+      }
+      session.promptTracker.clearPrompt();
+    }
+
+    broadcastToSession(session, msg);
   }
 }
 
@@ -279,7 +296,7 @@ function startServer() {
       sessionManager.addClient(sessionId, ws);
 
       // Send session info (no repoDir)
-      ws.send(JSON.stringify({ type: "session-info", repo: session.repo }));
+      ws.send(JSON.stringify({ type: "session-info", repo: session.repo, chatEnabled: config.chatEnabled }));
 
       // Send scrollback
       const scrollback = session.ptyManager.getScrollback();
@@ -326,6 +343,17 @@ function startServer() {
                 ws._inputBuffer = ws._inputBuffer.slice(0, -1);
               } else {
                 ws._inputBuffer += ch;
+                // Auto-flush single keypress answers to detected prompts
+                if (ws._inputBuffer.length === 1) {
+                  const activePrompt = session.promptTracker.getActivePrompt();
+                  if (activePrompt) {
+                    if (activePrompt.type === "yn" && /^[yYnN]$/.test(ch)) {
+                      flushInputBuffer(ws, session, activePrompt);
+                    } else if (activePrompt.type === "numbered" && /^\d$/.test(ch)) {
+                      flushInputBuffer(ws, session, activePrompt);
+                    }
+                  }
+                }
               }
             }
             break;

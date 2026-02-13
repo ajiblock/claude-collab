@@ -195,6 +195,11 @@ body {
   border-bottom-color: var(--accent);
 }
 
+/* Chat tab: hidden on desktop, shown on mobile */
+.tab-btn--chat-tab {
+  display: none;
+}
+
 .tab-btn--has-preview::after {
   content: "";
   width: 6px;
@@ -468,6 +473,17 @@ body {
   font-style: italic;
 }
 
+.chat-message__terminal-question {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .chat-message__terminal-text {
   font-size: 12px;
   color: var(--accent);
@@ -706,16 +722,62 @@ body {
 
   .content-area {
     flex: 1;
-    min-height: 50%;
+    min-height: 0;
   }
 
+  /* Show chat tab button on mobile */
+  .tab-btn--chat-tab {
+    display: inline-flex;
+  }
+
+  /* Hide chat sidebar by default on mobile (it's a tab now) */
   .chat-sidebar {
+    display: none;
+  }
+
+  /* When chat tab is active on mobile */
+  .main--chat-active .tab-panel {
+    display: none !important;
+  }
+
+  .main--chat-active .content-area {
+    flex: 0 0 auto;
+  }
+
+  .main--chat-active .chat-sidebar {
+    display: flex;
+    flex: 1;
     width: 100%;
     min-width: 100%;
-    max-height: 50%;
     border-left: none;
     border-top: 1px solid var(--border);
+    min-height: 0;
   }
+}
+
+/* Chat tab unread indicator */
+.tab-btn--chat-tab.tab-btn--unread::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--red);
+  border-radius: 50%;
+  margin-left: 6px;
+  display: inline-block;
+}
+
+/* No-chat mode: hide chat elements */
+.no-chat .chat-sidebar {
+  display: none !important;
+}
+
+.no-chat .tab-btn--chat-tab {
+  display: none !important;
+}
+
+/* No-chat: content area takes full width */
+.no-chat .content-area {
+  flex: 1;
 }
 
 /* ── Dashboard Body ── */
