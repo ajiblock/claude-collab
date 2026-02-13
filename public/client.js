@@ -189,6 +189,21 @@
       if (fitAddon) fitAddon.fit();
     });
 
+    // Fix ghost artifacts from Claude Code's cursor-positioned status bar.
+    // The DOM renderer doesn't always invalidate cells at previous positions
+    // when the status bar redraws at the bottom during scroll.
+    var refreshTimer = null;
+    term.onScroll(function () {
+      term.refresh(0, term.rows - 1);
+    });
+    term.onWriteParsed(function () {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(function () {
+        refreshTimer = null;
+        term.refresh(0, term.rows - 1);
+      }, 50);
+    });
+
     console.log("[collab] Terminal created");
   }
 
