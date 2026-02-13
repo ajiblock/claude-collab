@@ -6,6 +6,7 @@ const { spawnSync } = require("child_process");
 const args = process.argv.slice(2);
 let port = null;
 let noTunnel = false;
+let noChat = false;
 let debug = false;
 
 for (let i = 0; i < args.length; i++) {
@@ -14,6 +15,8 @@ for (let i = 0; i < args.length; i++) {
     i++;
   } else if (args[i] === "--no-tunnel") {
     noTunnel = true;
+  } else if (args[i] === "--no-chat") {
+    noChat = true;
   } else if (args[i] === "--debug") {
     debug = true;
   } else if (args[i] === "--help" || args[i] === "-h") {
@@ -22,6 +25,7 @@ for (let i = 0; i < args.length; i++) {
     console.log("Options:");
     console.log("  --port <number>  Port to listen on (default: 4321)");
     console.log("  --no-tunnel      Skip tunnel creation, use local network only");
+    console.log("  --no-chat        Disable the chat sidebar");
     console.log("  --debug          Enable verbose request and connection logging");
     console.log("  --help, -h       Show this help message");
     process.exit(0);
@@ -30,6 +34,7 @@ for (let i = 0; i < args.length; i++) {
 
 // Set env vars before requiring server
 if (port) process.env.PORT = String(port);
+if (noChat) process.env.CLAUDE_COLLAB_NO_CHAT = "1";
 if (debug) process.env.CLAUDE_COLLAB_DEBUG = "1";
 
 // Check claude is available (use shell to handle functions/aliases)

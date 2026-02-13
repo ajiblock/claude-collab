@@ -42,6 +42,7 @@
   // Tab elements
   const tabTerminal = document.getElementById("tab-terminal");
   const tabPreview = document.getElementById("tab-preview");
+  const tabChat = document.getElementById("tab-chat");
   const panelTerminal = document.getElementById("panel-terminal");
   const panelPreview = document.getElementById("panel-preview");
 
@@ -68,6 +69,8 @@
   let sessionEnded = false;
   let scrollbackReplayed = false;
   let currentPreviewPort = null;
+  let chatEnabled = true;
+  let activeTab = "terminal"; // "terminal" | "preview" | "chat"
 
   // ── Helpers ──
 
@@ -223,7 +226,7 @@
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   }
 
-  function appendTerminalSubmission(name, text, timestamp) {
+  function appendTerminalSubmission(name, text, timestamp, promptQuestion, selectedOption) {
     const msgEl = document.createElement("div");
     msgEl.className = "chat-message chat-message--terminal";
 
@@ -232,7 +235,9 @@
 
     const labelEl = document.createElement("span");
     labelEl.className = "chat-message__terminal-label";
-    labelEl.textContent = name + " submitted to Claude:";
+    labelEl.textContent = selectedOption
+      ? name + " answered:"
+      : name + " submitted to Claude:";
 
     const timeEl = document.createElement("span");
     timeEl.className = "chat-message__time";
@@ -240,12 +245,25 @@
 
     headerEl.appendChild(labelEl);
     headerEl.appendChild(timeEl);
-
-    const textEl = document.createElement("div");
-    textEl.className = "chat-message__terminal-text";
-    textEl.textContent = text;
-
     msgEl.appendChild(headerEl);
+
+    if (promptQuestion) {
+      var questionEl = document.createElement("div");
+      questionEl.className = "chat-message__terminal-question";
+      var truncated = promptQuestion.length > 80
+        ? promptQuestion.slice(0, 80) + "..."
+        : promptQuestion;
+      questionEl.textContent = truncated;
+      if (promptQuestion.length > 80) {
+        questionEl.title = promptQuestion;
+      }
+      msgEl.appendChild(questionEl);
+    }
+
+    var textEl = document.createElement("div");
+    textEl.className = "chat-message__terminal-text";
+    textEl.textContent = selectedOption || text;
+
     msgEl.appendChild(textEl);
 
     chatMessagesEl.appendChild(msgEl);
@@ -329,6 +347,11 @@
           if (msg.repo) {
             repoNameEl.textContent = msg.repo;
           }
+          // Apply no-chat mode if server says chat is disabled
+          if (msg.chatEnabled === false) {
+            chatEnabled = false;
+            document.querySelector(".main").classList.add("no-chat");
+          }
           // Clear terminal on new session (removes stale scrollback from previous session)
           if (term) term.clear();
           break;
@@ -343,6 +366,9 @@
 
         case "chat-message":
           appendChatMessage(msg.name, msg.text, msg.ts);
+          if (isMobile() && activeTab !== "chat") {
+            tabChat.classList.add("tab-btn--unread");
+          }
           break;
 
         case "users-update":
@@ -356,7 +382,10 @@
           break;
 
         case "terminal-submission":
-          appendTerminalSubmission(msg.name, msg.text, msg.ts);
+          appendTerminalSubmission(msg.name, msg.text, msg.ts, msg.promptQuestion, msg.selectedOption);
+          if (isMobile() && activeTab !== "chat") {
+            tabChat.classList.add("tab-btn--unread");
+          }
           break;
 
         case "preview-port-update":
@@ -420,22 +449,42 @@
 
   // ── Tab Switching ──
 
+  function isMobile() {
+    return window.innerWidth <= 560;
+  }
+
   function switchTab(tab) {
+    activeTab = tab;
+    var mainEl = document.querySelector(".main");
+
+    // Reset all tab active states
+    tabTerminal.classList.remove("tab-btn--active");
+    tabPreview.classList.remove("tab-btn--active");
+    tabChat.classList.remove("tab-btn--active");
+
+    // Reset panels
+    panelTerminal.classList.remove("tab-panel--active");
+    panelPreview.classList.remove("tab-panel--active");
+
+    // Remove mobile chat-active class
+    mainEl.classList.remove("main--chat-active");
+
     if (tab === "terminal") {
       tabTerminal.classList.add("tab-btn--active");
-      tabPreview.classList.remove("tab-btn--active");
       panelTerminal.classList.add("tab-panel--active");
-      panelPreview.classList.remove("tab-panel--active");
-      // Refit terminal when switching back
       requestAnimationFrame(function () {
         if (fitAddon) fitAddon.fit();
         if (term) term.focus();
       });
-    } else {
+    } else if (tab === "preview") {
       tabPreview.classList.add("tab-btn--active");
-      tabTerminal.classList.remove("tab-btn--active");
       panelPreview.classList.add("tab-panel--active");
-      panelTerminal.classList.remove("tab-panel--active");
+    } else if (tab === "chat") {
+      tabChat.classList.add("tab-btn--active");
+      tabChat.classList.remove("tab-btn--unread");
+      if (isMobile()) {
+        mainEl.classList.add("main--chat-active");
+      }
     }
   }
 
@@ -444,6 +493,7 @@
     switchTab("preview");
     tabPreview.classList.remove("tab-btn--has-preview");
   });
+  tabChat.addEventListener("click", function () { switchTab("chat"); });
 
   // ── Preview Logic ──
 
