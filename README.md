@@ -108,35 +108,6 @@ claude-collab --debug
 
 ## Features
 
-```
-  +-----------------------------------------------+
-  |             DASHBOARD (index.html)             |
-  |                                                |
-  |  [Repo URL: ________________] [Start Session]  |
-  |                                                |
-  |  Active Sessions:                              |
-  |  +----------------------------+                |
-  |  | my-app  (2 users)    [End] |                |
-  |  +----------------------------+                |
-  |  +----------------------------+                |
-  |  | api-server (1 user)  [End] |                |
-  |  +----------------------------+                |
-  +-----------------------------------------------+
-
-  +-----------------------------------------------+
-  |            SESSION (session.html)              |
-  |                                                |
-  |  +-------------------------+ +--------------+  |
-  |  |                         | | Chat         |  |
-  |  |  Claude Code            | |              |  |
-  |  |  Terminal               | | Alice: hi!   |  |
-  |  |                         | | Bob: hey     |  |
-  |  |  > fixing the bug...   | |              |  |
-  |  |                         | | [message]    |  |
-  |  +-------------------------+ +--------------+  |
-  +-----------------------------------------------+
-```
-
 - **Multi-session** — Run multiple Claude Code sessions at once against different repos
 - **Auto-tunnel** — Creates a public HTTPS URL automatically (Cloudflare > localtunnel > LAN fallback)
 - **Real-time terminal** — Shared PTY via WebSocket. Everyone sees the same output instantly.
