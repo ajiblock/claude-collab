@@ -39,6 +39,23 @@
   const reconnectBanner = document.getElementById("reconnect-banner");
   const reconnectText = document.getElementById("reconnect-text");
 
+  // Tab elements
+  const tabTerminal = document.getElementById("tab-terminal");
+  const tabPreview = document.getElementById("tab-preview");
+  const panelTerminal = document.getElementById("panel-terminal");
+  const panelPreview = document.getElementById("panel-preview");
+
+  // Preview elements
+  const previewSetup = document.getElementById("preview-setup");
+  const previewViewer = document.getElementById("preview-viewer");
+  const previewPortInput = document.getElementById("preview-port-input");
+  const previewConnectBtn = document.getElementById("preview-connect-btn");
+  const previewError = document.getElementById("preview-error");
+  const previewUrl = document.getElementById("preview-url");
+  const previewRefreshBtn = document.getElementById("preview-refresh-btn");
+  const previewDisconnectBtn = document.getElementById("preview-disconnect-btn");
+  const previewIframe = document.getElementById("preview-iframe");
+
   // ── State ──
   let userName = localStorage.getItem(STORAGE_KEY) || "";
   let ws = null;
@@ -50,6 +67,7 @@
   let colorIndex = 0;
   let sessionEnded = false;
   let scrollbackReplayed = false;
+  let currentPreviewPort = null;
 
   // ── Helpers ──
 
@@ -341,6 +359,21 @@
           appendTerminalSubmission(msg.name, msg.text, msg.ts);
           break;
 
+        case "preview-port-update":
+          if (msg.port) {
+            showPreviewViewer(msg.port);
+            tabPreview.classList.add("tab-btn--has-preview");
+          } else {
+            showPreviewSetup();
+            tabPreview.classList.remove("tab-btn--has-preview");
+          }
+          break;
+
+        case "preview-hint":
+          previewError.textContent = msg.message || "";
+          tabPreview.classList.add("tab-btn--has-preview");
+          break;
+
         case "session-ended":
           sessionEnded = true;
           if (term) term.write("\r\n\r\n[Session ended]\r\n");
@@ -384,6 +417,80 @@
       reconnectDelay = Math.min(reconnectDelay * 2, RECONNECT_MAX);
     }, reconnectDelay);
   }
+
+  // ── Tab Switching ──
+
+  function switchTab(tab) {
+    if (tab === "terminal") {
+      tabTerminal.classList.add("tab-btn--active");
+      tabPreview.classList.remove("tab-btn--active");
+      panelTerminal.classList.add("tab-panel--active");
+      panelPreview.classList.remove("tab-panel--active");
+      // Refit terminal when switching back
+      requestAnimationFrame(function () {
+        if (fitAddon) fitAddon.fit();
+        if (term) term.focus();
+      });
+    } else {
+      tabPreview.classList.add("tab-btn--active");
+      tabTerminal.classList.remove("tab-btn--active");
+      panelPreview.classList.add("tab-panel--active");
+      panelTerminal.classList.remove("tab-panel--active");
+    }
+  }
+
+  tabTerminal.addEventListener("click", function () { switchTab("terminal"); });
+  tabPreview.addEventListener("click", function () {
+    switchTab("preview");
+    tabPreview.classList.remove("tab-btn--has-preview");
+  });
+
+  // ── Preview Logic ──
+
+  function showPreviewViewer(port) {
+    currentPreviewPort = port;
+    previewSetup.style.display = "none";
+    previewViewer.style.display = "flex";
+    previewUrl.textContent = "localhost:" + port;
+    previewIframe.src = "/preview/" + sessionId + "/";
+  }
+
+  function showPreviewSetup() {
+    currentPreviewPort = null;
+    previewViewer.style.display = "none";
+    previewSetup.style.display = "flex";
+    previewIframe.src = "";
+    previewPortInput.value = "";
+    previewError.textContent = "";
+  }
+
+  previewConnectBtn.addEventListener("click", function () {
+    var port = parseInt(previewPortInput.value, 10);
+    if (!port || port < 1024 || port > 65535) {
+      previewError.textContent = "Enter a valid port (1024-65535)";
+      return;
+    }
+    previewError.textContent = "";
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: "set-preview-port", port: port }));
+    }
+  });
+
+  previewPortInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") previewConnectBtn.click();
+  });
+
+  previewRefreshBtn.addEventListener("click", function () {
+    if (previewIframe.src) {
+      previewIframe.src = previewIframe.src;
+    }
+  });
+
+  previewDisconnectBtn.addEventListener("click", function () {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: "set-preview-port", port: null }));
+    }
+  });
 
   // ── Boot ──
 

@@ -44,8 +44,8 @@ describe("server.js - HTTP API", () => {
       this.destroy = () => { this.process = null; };
     });
 
-    // Mock git.ensureRepo to avoid real git operations
-    mock.method(gitModule, "ensureRepo", (repoUrl, sessionDir) => {
+    // Mock git.cloneOrPull to avoid real git operations
+    mock.method(gitModule, "cloneOrPull", (repoUrl, sessionDir) => {
       const { owner, name } = gitModule.parseRepoUrl(repoUrl);
       const repoDir = path.join(sessionDir, "repo");
       fs.mkdirSync(repoDir, { recursive: true });
@@ -122,7 +122,7 @@ describe("server.js - HTTP API", () => {
       body: JSON.stringify({ repo: "https://gitlab.com/test/repo" }),
     });
     assert.strictEqual(res.status, 400);
-    assert.match((await res.json()).error, /Failed to create session/);
+    assert.match((await res.json()).error, /Invalid repo URL/);
   });
 
   it("GET /api/sessions/:id returns 404 for unknown ID", async () => {

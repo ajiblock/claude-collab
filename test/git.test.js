@@ -115,17 +115,19 @@ describe("lib/git.js", () => {
     });
   });
 
-  describe("ensureRepo", () => {
+  describe("ensureRepo / cloneOrPull", () => {
     it("validates URL before attempting clone", () => {
+      const { cloneOrPull } = require("../lib/git.js");
       assert.throws(
-        () => ensureRepo("https://gitlab.com/owner/repo", "/tmp/test"),
+        () => cloneOrPull("https://gitlab.com/owner/repo", "/tmp/test"),
         /Invalid repo URL.*only github\.com URLs are supported/
       );
     });
 
     it("rejects path traversal via validateParsed", () => {
+      const { cloneOrPull } = require("../lib/git.js");
       assert.throws(
-        () => ensureRepo("https://github.com/../evil/repo", "/tmp/test"),
+        () => cloneOrPull("https://github.com/../evil/repo", "/tmp/test"),
         /Invalid repo URL.*only github\.com URLs are supported/
       );
     });
@@ -160,6 +162,11 @@ describe("lib/git.js", () => {
       );
 
       fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it("cloneOrPull is an alias for ensureRepo", () => {
+      const { cloneOrPull, ensureRepo } = require("../lib/git.js");
+      assert.strictEqual(cloneOrPull, ensureRepo);
     });
   });
 });

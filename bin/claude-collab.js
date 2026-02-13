@@ -20,7 +20,7 @@ for (let i = 0; i < args.length; i++) {
     console.log("Usage: claude-collab [options]");
     console.log("");
     console.log("Options:");
-    console.log("  --port <number>  Port to listen on (default: 3000)");
+    console.log("  --port <number>  Port to listen on (default: 4321)");
     console.log("  --no-tunnel      Skip tunnel creation, use local network only");
     console.log("  --debug          Enable verbose request and connection logging");
     console.log("  --help, -h       Show this help message");
