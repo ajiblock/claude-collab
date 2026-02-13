@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>claude-collab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+  <div class="dashboard">
+    <!-- Hero -->
+    <header class="hero">
+      <h1 class="hero__title">claude-collab</h1>
+      <p class="hero__subtitle">Share a Claude Code terminal with anyone — collaborative AI pair programming</p>
+    </header>
+
+    <!-- Create Session Form -->
+    <section class="create-section">
+      <form id="create-form" class="create-form">
+        <div class="create-form__row">
+          <input
+            id="repo-input"
+            class="create-form__input"
+            type="url"
+            placeholder="https://github.com/owner/repo"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          >
+          <button id="create-btn" class="btn btn--primary create-form__btn" type="submit">
+            <span id="create-btn-text">Start Session</span>
+            <span id="create-btn-spinner" class="spinner spinner--hidden"></span>
+          </button>
+        </div>
+        <div id="create-error" class="create-form__error"></div>
+      </form>
+    </section>
+
+    <!-- Active Sessions -->
+    <section class="sessions-section">
+      <h2 class="sessions-section__title">Active Sessions</h2>
+      <div id="active-sessions" class="sessions-grid">
+        <!-- Cards rendered by JS -->
+      </div>
+      <div id="empty-state" class="empty-state empty-state--hidden">
+        <div class="empty-state__icon">&#9000;</div>
+        <div class="empty-state__title">No active sessions</div>
+        <div class="empty-state__text">Paste a GitHub repo URL above to start collaborating</div>
+      </div>
+    </section>
+
+    <!-- Ended Sessions -->
+    <div id="ended-section" class="ended-section ended-section--hidden">
+      <div class="ended-divider">
+        <span class="ended-divider__text">Ended</span>
+      </div>
+      <div id="ended-sessions" class="sessions-grid sessions-grid--ended">
+        <!-- Ended cards rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast toast--hidden"></div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

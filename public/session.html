@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session — claude-collab</title>
+
+  <!-- xterm.js -->
+  <link rel="stylesheet" href="https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css">
+  <script src="https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+  <script src="https://unpkg.com/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+  <script src="https://unpkg.com/@xterm/addon-web-links@0.11.0/lib/addon-web-links.js"></script>
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- Name Prompt Overlay -->
+  <div id="name-overlay" class="name-overlay">
+    <div class="name-card">
+      <div class="name-card__title">claude-collab</div>
+      <div class="name-card__subtitle">Join the shared terminal session</div>
+      <input
+        id="name-input"
+        class="name-card__input"
+        type="text"
+        placeholder="Enter your name"
+        maxlength="24"
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <button id="name-join-btn" class="name-card__btn" disabled>Join</button>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <a href="/" class="top-bar__back" title="Back to Dashboard">&#8592;</a>
+    <span class="top-bar__brand">claude-collab</span>
+    <span id="repo-name" class="top-bar__repo"></span>
+    <div class="top-bar__spacer"></div>
+    <div class="top-bar__status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Connecting</span>
+    </div>
+    <button id="invite-btn" class="top-bar__invite" title="Copy invite link">
+      <span id="invite-text">Invite</span>
+    </button>
+    <div class="top-bar__users">
+      <span id="user-count">0</span> online
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div id="terminal" class="terminal-container"></div>
+    <aside class="chat-sidebar">
+      <div class="chat-header">
+        Chat
+        <span id="chat-badge" class="chat-header__badge"></span>
+      </div>
+      <div id="chat-messages" class="chat-messages"></div>
+      <div class="chat-input-area">
+        <input
+          id="chat-input"
+          class="chat-input"
+          type="text"
+          placeholder="Send a message..."
+          maxlength="500"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button id="chat-send-btn" class="chat-send-btn">Send</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Reconnect Banner -->
+  <div id="reconnect-banner" class="reconnect-banner">
+    <div class="reconnect-spinner"></div>
+    <span id="reconnect-text">Disconnected. Reconnecting...</span>
+  </div>
+
+  <!-- Session Ended Overlay -->
+  <div id="session-ended-overlay" class="session-ended-overlay session-ended-overlay--hidden">
+    <div class="session-ended-card">
+      <div class="session-ended-card__title">Session Ended</div>
+      <div class="session-ended-card__text">This collaborative session has been ended.</div>
+      <a href="/" class="session-ended-card__btn">Back to Dashboard</a>
+    </div>
+  </div>
+
+  <script src="/client.js"></script>
+</body>
+</html>
